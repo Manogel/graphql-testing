@@ -13,7 +13,7 @@ export const queries = {
 export const mutations = {
   saveComment: {
     type: CommentType,
-    resolver: saveComment,
+    resolve: saveComment,
     args: {
       input: {
         type: new GraphQLInputObjectType({
