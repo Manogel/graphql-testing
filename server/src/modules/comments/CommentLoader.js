@@ -1,6 +1,7 @@
 import Comment from "./CommentModel";
 
 export async function saveComment(_, { input }) {
+  console.log(input);
   const comment = await Comment.create(input);
   return comment;
 }
