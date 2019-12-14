@@ -2,12 +2,17 @@ import React, { useState } from "react";
 
 import { Container } from "./styles";
 
-export default function Form() {
+export default function Form({ onHandleComment }) {
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
 
+  function setNewComment(e) {
+    e.preventDefault();
+    onHandleComment(name, content);
+  }
+
   return (
-    <Container onSubmit={e => e.preventDefault()}>
+    <Container onSubmit={e => setNewComment(e)}>
       <input
         type="text"
         placeholder="Digite seu nome"

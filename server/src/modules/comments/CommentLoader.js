@@ -10,3 +10,8 @@ export async function getComments() {
   const comments = await Comment.find();
   return comments;
 }
+
+export async function deleteComment(_, { id }) {
+  const comment = await Comment.findByIdAndDelete(id);
+  return comment;
+}

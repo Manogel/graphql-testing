@@ -1,5 +1,5 @@
-import React from "react";
-import { useQuery } from "@apollo/react-hooks";
+import React, { useEffect } from "react";
+import { useQuery, useMutation } from "@apollo/react-hooks";
 import { gql } from "apollo-boost";
 import Form from "./components/Form";
 import Comment from "./components/Comment";
@@ -16,10 +16,46 @@ const GET_COMMENTS = gql`
   }
 `;
 
+const INSERT_COMMENTS = gql`
+  mutation SaveComent($name: String!, $content: String!) {
+    saveComment(input: { name: $name, content: $content }) {
+      name
+      content
+    }
+  }
+`;
+
+const DELETE_COMMENT = gql`
+  mutation DeleteComment($id: String!) {
+    deleteComment(id: $id) {
+      name
+      content
+    }
+  }
+`;
+
 function App() {
-  const { loading, error, data } = useQuery(GET_COMMENTS);
+  const { loading, error, data: commentsData, refetch } = useQuery(
+    GET_COMMENTS
+  );
+  const [saveComment, { data }] = useMutation(INSERT_COMMENTS);
+  const [deleteComment] = useMutation(DELETE_COMMENT);
+
+  useEffect(() => {
+    console.log(data);
+  }, [data]);
 
   if (error) return "Deu ruim";
+
+  function handleComment(name, content) {
+    saveComment({ variables: { name, content } });
+    refetch();
+  }
+
+  function handleDeleteComment(id) {
+    deleteComment({ variables: { id } });
+    refetch();
+  }
 
   return (
     <>
@@ -28,10 +64,16 @@ function App() {
         "Carregando..."
       ) : (
         <>
-          <Form />
+          <Form onHandleComment={handleComment} />
           <section className="comments">
-            {data.comments.map(({ id, name, content }) => (
-              <Comment key={id} name={name} content={content} />
+            {commentsData.comments.map(({ id, name, content }) => (
+              <Comment
+                key={id}
+                id={id}
+                name={name}
+                content={content}
+                onDeleteComment={handleDeleteComment}
+              />
             ))}
           </section>
         </>
