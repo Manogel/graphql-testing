@@ -1,8 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@apollo/react-hooks";
+import { print } from "graphql";
 import { gql } from "apollo-boost";
 import Form from "./components/Form";
 import Comment from "./components/Comment";
+import client from "./services/api";
 
 const GET_COMMENTS = gql`
   query {
@@ -35,26 +37,73 @@ const DELETE_COMMENT = gql`
 `;
 
 function App() {
-  const { loading, error, data: commentsData, refetch } = useQuery(
+  const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState(null);
+  /* const { loading, error, data: commentsData, refetch } = useQuery(
     GET_COMMENTS
   );
   const [saveComment, { data }] = useMutation(INSERT_COMMENTS);
-  const [deleteComment] = useMutation(DELETE_COMMENT);
+  const [deleteComment] = useMutation(DELETE_COMMENT); */
 
   useEffect(() => {
-    console.log(data);
-  }, [data]);
+    async function getComments() {
+      const response = await client.post("", {
+        query: `
+          query {
+            comments {
+              id
+              name
+              content
+              createdAt
+              updatedAt
+            }
+        }
+        `
+      });
+      console.log(response);
+      setComments(response.data.data.comments);
+    }
+    getComments();
+    setLoading(false);
+  }, []);
 
-  if (error) return "Deu ruim";
+  // if (error) return "Deu ruim";
 
-  function handleComment(name, content) {
-    saveComment({ variables: { name, content } });
-    refetch();
+  async function handleComment(name, content) {
+    //saveComment({ variables: { name, content } });
+    //refetch();
+    const response = await client.post("", {
+      query: `
+        mutation SaveComent($name: String!, $content: String!) {
+          created: saveComment(input: {name: $name, content: $content}) {
+            id
+            name
+            content
+        }
+      }
+      `,
+      variables: { name, content }
+    });
+    const { created } = response.data.data;
+    setComments([created, ...comments]);
   }
 
-  function handleDeleteComment(id) {
-    deleteComment({ variables: { id } });
-    refetch();
+  async function handleDeleteComment(id) {
+    // deleteComment({ variables: { id } });
+    //refetch();
+    await client.post("", {
+      query: `
+        mutation DeleteComment($id: String!) {
+          deleted: deleteComment(id: $id) {
+            id
+            name
+            content
+          }
+      }
+      `,
+      variables: { id: String(id) }
+    });
+    setComments(comments.filter(comment => comment.id !== id));
   }
 
   return (
@@ -66,7 +115,7 @@ function App() {
         <>
           <Form onHandleComment={handleComment} />
           <section className="comments">
-            {commentsData.comments.map(({ id, name, content }) => (
+            {comments?.map(({ id, name, content }) => (
               <Comment
                 key={id}
                 id={id}
